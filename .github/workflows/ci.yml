@@ -1,0 +1,108 @@
+# SPDX-License-Identifier: MIT
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: build & test (${{ matrix.compiler }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - compiler: gcc
+            cc: gcc
+            cxx: g++
+          - compiler: clang
+            cc: clang
+            cxx: clang++
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+  firmware-avr:
+    name: baremetal AVR firmware (avr-gcc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install AVR toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-avr avr-libc binutils-avr cmake ninja-build
+
+      - name: Configure (atmega328p)
+        run: >
+          cmake -S . -B build-avr -G Ninja
+          -DCMAKE_TOOLCHAIN_FILE=cmake/avr-toolchain.cmake
+          -DAVR_MCU=atmega328p -DAVR_F_CPU=16000000
+
+      - name: Build firmware (.elf + .hex + size)
+        run: cmake --build build-avr --parallel
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keypad-atmega328p
+          path: |
+            build-avr/**/*.elf
+            build-avr/**/*.hex
+
+  firmware-arm:
+    name: baremetal ARM firmware (arm-none-eabi-gcc)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi cmake ninja-build
+
+      - name: Configure (STM32F103, cortex-m3)
+        run: >
+          cmake -S . -B build-arm -G Ninja
+          -DCMAKE_TOOLCHAIN_FILE=cmake/arm-toolchain.cmake
+          -DARM_CPU=cortex-m3
+
+      - name: Build firmware (.elf + .hex + size)
+        run: cmake --build build-arm --parallel
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: keypad-stm32f103
+          path: |
+            build-arm/**/*.elf
+            build-arm/**/*.hex
+
+  format:
+    name: clang-format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get update && sudo apt-get install -y clang-format
+
+      - name: Check formatting
+        run: |
+          files=$(git ls-files '*.c' '*.cc' '*.cpp' '*.h' '*.hpp')
+          if [ -n "$files" ]; then
+            clang-format --dry-run --Werror $files
+          fi

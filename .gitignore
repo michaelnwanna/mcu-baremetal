@@ -1,0 +1,37 @@
+# Build directories
+build/
+build-*/
+out/
+cmake-build-*/
+_deps/
+
+# CMake artifacts
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+compile_commands.json
+Testing/
+
+# Editors / IDEs
+.vs/
+.vscode/
+.idea/
+*.user
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.exe
+*.elf
+*.bin
+*.hex
+*.map

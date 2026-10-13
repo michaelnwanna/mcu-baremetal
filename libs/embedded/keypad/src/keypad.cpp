@@ -47,8 +47,7 @@ uint64_t Keypad::readMatrix() const noexcept {
         _hal.writePin(_cfg.colPins[c], false);  // drive this column LOW
         for (uint8_t r = 0; r < _cfg.rows; ++r) {
             if (!_hal.readPin(_cfg.rowPins[r])) {  // pressed -> row pulled LOW
-                const uint8_t bit =
-                    static_cast<uint8_t>(r * _cfg.cols + c);
+                const uint8_t bit = static_cast<uint8_t>(r * _cfg.cols + c);
                 mask |= (uint64_t{1} << bit);
             }
         }

@@ -5,8 +5,8 @@
 // On AVR the toolchain hands you a ready-made reset/vector table via its device
 // crt. ARM Cortex-M does not: the *first* thing in flash must be a vector table
 // whose first word is the initial stack pointer and whose second word is the
-// reset handler. So we own the whole bring-up here — and that, rather than being
-// a chore, is exactly the bare-metal story this repo is about.
+// reset handler. So we own the whole bring-up here — and that, rather than
+// being a chore, is exactly the bare-metal story this repo is about.
 //
 // Reset_Handler does the C runtime's job by hand:
 //   1. copy initialised data (.data) from its flash image into RAM,
@@ -42,8 +42,9 @@ extern "C" [[noreturn]] void Reset_Handler() {
 
     // 3. Hand control to the application.
     // ISO C++ forbids a program from calling main() itself (-Wpedantic), but a
-    // freestanding reset handler is exactly the one place that legitimately must
-    // — there is no C runtime to do it for us. Suppress the warning locally.
+    // freestanding reset handler is exactly the one place that legitimately
+    // must — there is no C runtime to do it for us. Suppress the warning
+    // locally.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
     main();
@@ -76,26 +77,30 @@ extern "C" void DebugMon_Handler() KP_WEAK_ALIAS;
 extern "C" void PendSV_Handler() KP_WEAK_ALIAS;
 extern "C" void SysTick_Handler() KP_WEAK_ALIAS;
 
-// ---- The vector table --------------------------------------------------------
-// Placed at the very start of flash by the linker script's KEEP(*(.isr_vector)).
-// Entry 0 is the initial stack pointer; entry 1 is the reset handler; entries
-// 2..15 are the Cortex-M core exceptions. We store everything as uintptr_t so
-// the stack-pointer value and the function pointers can share one array.
+// ---- The vector table
+// -------------------------------------------------------- Placed at the very
+// start of flash by the linker script's KEEP(*(.isr_vector)). Entry 0 is the
+// initial stack pointer; entry 1 is the reset handler; entries 2..15 are the
+// Cortex-M core exceptions. We store everything as uintptr_t so the
+// stack-pointer value and the function pointers can share one array.
 using Handler = void (*)();
 
 __attribute__((section(".isr_vector"), used))
 const uintptr_t g_vectorTable[] = {
-    reinterpret_cast<uintptr_t>(&_estack),                  //  0: initial SP
-    reinterpret_cast<uintptr_t>(Reset_Handler),             //  1: reset
-    reinterpret_cast<uintptr_t>(NMI_Handler),               //  2
-    reinterpret_cast<uintptr_t>(HardFault_Handler),         //  3
-    reinterpret_cast<uintptr_t>(MemManage_Handler),         //  4
-    reinterpret_cast<uintptr_t>(BusFault_Handler),          //  5
-    reinterpret_cast<uintptr_t>(UsageFault_Handler),        //  6
-    0, 0, 0, 0,                                             //  7-10: reserved
-    reinterpret_cast<uintptr_t>(SVC_Handler),               // 11
-    reinterpret_cast<uintptr_t>(DebugMon_Handler),          // 12
-    0,                                                      // 13: reserved
-    reinterpret_cast<uintptr_t>(PendSV_Handler),            // 14
-    reinterpret_cast<uintptr_t>(SysTick_Handler),           // 15: 1 ms tick
+    reinterpret_cast<uintptr_t>(&_estack),            //  0: initial SP
+    reinterpret_cast<uintptr_t>(Reset_Handler),       //  1: reset
+    reinterpret_cast<uintptr_t>(NMI_Handler),         //  2
+    reinterpret_cast<uintptr_t>(HardFault_Handler),   //  3
+    reinterpret_cast<uintptr_t>(MemManage_Handler),   //  4
+    reinterpret_cast<uintptr_t>(BusFault_Handler),    //  5
+    reinterpret_cast<uintptr_t>(UsageFault_Handler),  //  6
+    0,
+    0,
+    0,
+    0,                                              //  7-10: reserved
+    reinterpret_cast<uintptr_t>(SVC_Handler),       // 11
+    reinterpret_cast<uintptr_t>(DebugMon_Handler),  // 12
+    0,                                              // 13: reserved
+    reinterpret_cast<uintptr_t>(PendSV_Handler),    // 14
+    reinterpret_cast<uintptr_t>(SysTick_Handler),   // 15: 1 ms tick
 };

@@ -20,8 +20,9 @@
 
 // Freestanding C header: <stdint.h> is guaranteed available even on baremetal
 // toolchains that ship no C++ standard library (e.g. avr-gcc/AVR-libc), whereas
-// the hosted <cstdint> is not. We therefore use the global-namespace fixed-width
-// types so the driver compiles identically on a desktop and on an MCU.
+// the hosted <cstdint> is not. We therefore use the global-namespace
+// fixed-width types so the driver compiles identically on a desktop and on an
+// MCU.
 #include <stdint.h>
 
 namespace kp {
@@ -57,7 +58,8 @@ public:
         void (*writePin)(uint8_t pin, bool high) = nullptr;
         /// Read @p pin; returns true for HIGH.
         bool (*readPin)(uint8_t pin) = nullptr;
-        /// Busy-wait for @p ms milliseconds. Used only by the blocking getKey().
+        /// Busy-wait for @p ms milliseconds. Used only by the blocking
+        /// getKey().
         void (*delayMs)(uint32_t ms) = nullptr;
     };
 
@@ -70,12 +72,12 @@ public:
     ///       outlive the Keypad. keymap is row-major with rows*cols entries:
     ///       keymap[row * cols + col].
     struct Config {
-        const uint8_t* rowPins = nullptr;       ///< rows entries
-        const uint8_t* colPins = nullptr;       ///< cols entries
-        const char* keymap = nullptr;           ///< row-major, rows*cols entries
+        const uint8_t* rowPins = nullptr;  ///< rows entries
+        const uint8_t* colPins = nullptr;  ///< cols entries
+        const char* keymap = nullptr;      ///< row-major, rows*cols entries
         uint8_t rows = 0;
         uint8_t cols = 0;
-        uint16_t debounceMs = 20;               ///< stable window before commit
+        uint16_t debounceMs = 20;  ///< stable window before commit
     };
 
     Keypad(const Config& config, const GpioHal& hal) noexcept;
@@ -119,9 +121,9 @@ private:
     GpioHal _hal;
 
     // Debounce state (bounded, heap-free).
-    uint64_t _stable = 0;      ///< committed pressed-key bitmask
-    uint64_t _candidate = 0;   ///< last raw sample under observation
-    uint32_t _changedAtMs = 0; ///< when _candidate last changed
+    uint64_t _stable = 0;       ///< committed pressed-key bitmask
+    uint64_t _candidate = 0;    ///< last raw sample under observation
+    uint32_t _changedAtMs = 0;  ///< when _candidate last changed
 
     Event _event = Event::None;
     char _eventKey = kNoKey;

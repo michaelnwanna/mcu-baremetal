@@ -29,7 +29,8 @@
 //   ROW2 PD4  │
 //   ROW3 PD5 ─┘
 //
-// Build with the AVR toolchain (see the repo README / cmake/avr-toolchain.cmake).
+// Build with the AVR toolchain (see the repo README /
+// cmake/avr-toolchain.cmake).
 
 #include <stdint.h>  // freestanding only — fixed-width integer types
 
@@ -70,7 +71,9 @@ inline void clearBits(uint16_t addr, uint8_t bits) noexcept {
 }  // namespace reg
 
 // ---- CPU intrinsics (no library, raw instructions) --------------------------
-inline void enableInterrupts() noexcept { asm volatile("sei" ::: "memory"); }
+inline void enableInterrupts() noexcept {
+    asm volatile("sei" ::: "memory");
+}
 
 /// Busy-wait one millisecond, hand-written in inline assembly — no compiler
 /// delay intrinsic and no library. The inner loop is exactly 4 CPU cycles per
@@ -149,15 +152,15 @@ constexpr uint8_t WGM01 = 1, CS01 = 1, CS00 = 0, OCIE0A = 1;
 void clockInit() {
     reg::r8(reg::TCCR0A) = reg::mask(WGM01);  // CTC (clear on compare match)
     reg::r8(reg::OCR0A) =
-        static_cast<uint8_t>(F_CPU / 64UL / 1000UL - 1UL);            // 1 ms
-    reg::r8(reg::TCCR0B) = reg::mask(CS01) | reg::mask(CS00);         // /64
+        static_cast<uint8_t>(F_CPU / 64UL / 1000UL - 1UL);     // 1 ms
+    reg::r8(reg::TCCR0B) = reg::mask(CS01) | reg::mask(CS00);  // /64
     reg::r8(reg::TIMSK0) = reg::mask(OCIE0A);  // compare-match A interrupt
 }
 
 uint32_t millis() {
-    // A 32-bit read on an 8-bit core is not atomic, and the ISR writes g_millis.
-    // Guard it by saving SREG, disabling interrupts, reading, then restoring the
-    // I-flag — all without <util/atomic.h>.
+    // A 32-bit read on an 8-bit core is not atomic, and the ISR writes
+    // g_millis. Guard it by saving SREG, disabling interrupts, reading, then
+    // restoring the I-flag — all without <util/atomic.h>.
     const uint8_t saved = reg::r8(reg::SREG);
     asm volatile("cli" ::: "memory");
     const uint32_t ms = g_millis;
@@ -174,8 +177,8 @@ void usartInit() {
     reg::r8(reg::UBRR0H) = static_cast<uint8_t>(ubrr >> 8);
     reg::r8(reg::UBRR0L) = static_cast<uint8_t>(ubrr);
     reg::r8(reg::UCSR0B) = reg::mask(TXEN0);  // enable transmitter
-    reg::r8(reg::UCSR0C) =
-        reg::mask(UCSZ01) | reg::mask(UCSZ00);  // 8 data bits, 1 stop, no parity
+    reg::r8(reg::UCSR0C) = reg::mask(UCSZ01) |
+                           reg::mask(UCSZ00);  // 8 data bits, 1 stop, no parity
 }
 
 void usartPut(char c) {
@@ -190,7 +193,8 @@ void ledInit() {
     reg::setBits(reg::DDRB, reg::mask(PB5));  // drive PB5 as output
 }
 void ledToggle() {
-    reg::r8(reg::PINB) = reg::mask(PB5);  // writing 1 to PINx toggles the output
+    reg::r8(reg::PINB) =
+        reg::mask(PB5);  // writing 1 to PINx toggles the output
 }
 
 }  // namespace
@@ -200,7 +204,9 @@ void ledToggle() {
 // here. The `signal` attribute makes GCC emit a full register-saving ISR ending
 // in `reti`; `used` keeps the symbol alive through LTO.
 extern "C" void __vector_14() __attribute__((signal, used));
-extern "C" void __vector_14() { ++g_millis; }
+extern "C" void __vector_14() {
+    ++g_millis;
+}
 
 int main() {
     // 4x4 keypad geometry. Stored in flash-resident static storage so it

@@ -8,9 +8,9 @@
 // pointers (which cannot capture state), the mock lives in a single global
 // instance that the free functions below operate on.
 
-#include <cstdio>
-
 #include "keypad/keypad.hpp"
+
+#include <cstdio>
 
 namespace {
 
@@ -18,14 +18,13 @@ namespace {
 int g_failures = 0;
 int g_checks = 0;
 
-#define CHECK(cond)                                                        \
-    do {                                                                   \
-        ++g_checks;                                                        \
-        if (!(cond)) {                                                     \
-            std::printf("FAIL %s:%d: CHECK(%s)\n", __FILE__, __LINE__,     \
-                        #cond);                                            \
-            ++g_failures;                                                  \
-        }                                                                  \
+#define CHECK(cond)                                                            \
+    do {                                                                       \
+        ++g_checks;                                                            \
+        if (!(cond)) {                                                         \
+            std::printf("FAIL %s:%d: CHECK(%s)\n", __FILE__, __LINE__, #cond); \
+            ++g_failures;                                                      \
+        }                                                                      \
     } while (0)
 
 #define CHECK_EQ(actual, expected)                                            \
@@ -52,9 +51,9 @@ constexpr char kKeymap[16] = {
 };
 
 struct Mock {
-    bool pressed[4][4] = {};   // pressed[row][col]
-    bool colLow[16] = {};      // indexed by pin number
-    uint32_t now = 0;          // virtual clock advanced by delayMs
+    bool pressed[4][4] = {};      // pressed[row][col]
+    bool colLow[16] = {};         // indexed by pin number
+    uint32_t now = 0;             // virtual clock advanced by delayMs
     int releaseAfterDelays = -1;  // <0 disables auto-release
 
     void press(uint8_t row, uint8_t col) { pressed[row][col] = true; }
@@ -68,7 +67,9 @@ Mock* g = nullptr;
 
 void mSetOutput(uint8_t) {}
 void mSetInput(uint8_t) {}
-void mWrite(uint8_t pin, bool high) { g->colLow[pin] = !high; }
+void mWrite(uint8_t pin, bool high) {
+    g->colLow[pin] = !high;
+}
 
 bool mRead(uint8_t pin) {
     // pin is a row pin (0..3). Idle HIGH unless a pressed key on this row sits
@@ -203,8 +204,9 @@ void test_getkey_blocking() {
     kp::Keypad pad(makeConfig(), makeHal());
     pad.init();
 
-    mock.press(3, 3);          // 'D'
-    mock.releaseAfterDelays = 2;  // auto-release after a couple of debounce waits
+    mock.press(3, 3);  // 'D'
+    mock.releaseAfterDelays =
+        2;  // auto-release after a couple of debounce waits
     CHECK_EQ(pad.getKey(), 'D');
 }
 

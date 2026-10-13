@@ -26,7 +26,8 @@
 //   ROW3 PB8 ─┘
 //
 // Runs from the 8 MHz HSI (reset default); no PLL/flash-latency setup needed.
-// Build with the ARM toolchain (see the repo README / cmake/arm-toolchain.cmake).
+// Build with the ARM toolchain (see the repo README /
+// cmake/arm-toolchain.cmake).
 
 #include <stdint.h>  // freestanding only — fixed-width integer types
 
@@ -61,7 +62,9 @@ constexpr uint32_t kSysTickCvr = 0xE000E018;
 }
 
 /// 32-bit mask with only bit @p n set.
-[[nodiscard]] constexpr uint32_t mask(uint32_t n) noexcept { return 1u << n; }
+[[nodiscard]] constexpr uint32_t mask(uint32_t n) noexcept {
+    return 1u << n;
+}
 
 /// Read-modify-write: set the @p bits of register @p addr to 1.
 inline void setBits(uint32_t addr, uint32_t bits) noexcept {
@@ -120,7 +123,8 @@ void setPinInput(uint8_t id) {
 void writePin(uint8_t id, bool high) {
     const PinMap& p = kPins[id];
     // BSRR sets a bit, BRR clears it — atomic, no read-modify-write needed.
-    const uint32_t target = high ? p.gpio + reg::kGpioBsrr : p.gpio + reg::kGpioBrr;
+    const uint32_t target =
+        high ? p.gpio + reg::kGpioBsrr : p.gpio + reg::kGpioBrr;
     reg::r32(target) = reg::mask(p.bit);
 }
 
@@ -138,15 +142,15 @@ constexpr uint32_t kSysTickClkSource = 2;  // CSR bit 2 (1 = core clock)
 
 void clockInit() {
     reg::r32(reg::kSysTickRvr) = kHsiHz / 1000u - 1u;  // 1 ms reload
-    reg::r32(reg::kSysTickCvr) = 0;                     // clear current value
+    reg::r32(reg::kSysTickCvr) = 0;                    // clear current value
     reg::r32(reg::kSysTickCsr) = reg::mask(kSysTickEnable) |
                                  reg::mask(kSysTickTickInt) |
                                  reg::mask(kSysTickClkSource);
 }
 
 uint32_t millis() {
-    // A 32-bit, word-aligned load is atomic on Cortex-M, so unlike the 8-bit AVR
-    // build we need no interrupt-masking critical section here.
+    // A 32-bit, word-aligned load is atomic on Cortex-M, so unlike the 8-bit
+    // AVR build we need no interrupt-masking critical section here.
     return g_millis;
 }
 
@@ -157,9 +161,9 @@ void delayMs(uint32_t ms) {
 }
 
 // ---- USART1: 9600 8N1, transmit only (PA9 = TX) -----------------------------
-constexpr uint32_t kUsartCr1Te = 3;    // transmitter enable
-constexpr uint32_t kUsartCr1Ue = 13;   // USART enable
-constexpr uint32_t kUsartSrTxe = 7;    // TX data register empty
+constexpr uint32_t kUsartCr1Te = 3;            // transmitter enable
+constexpr uint32_t kUsartCr1Ue = 13;           // USART enable
+constexpr uint32_t kUsartSrTxe = 7;            // TX data register empty
 constexpr uint8_t kCfgAltPushPull50MHz = 0xB;  // MODE=11, CNF=10 (alt-fn out)
 
 void usartInit() {
@@ -178,10 +182,13 @@ void usartPut(char c) {
 
 // ---- On-board LED (PC13, active-low) ----------------------------------------
 constexpr uint8_t kLedPin = 13;
-void ledInit() { configPin(reg::kGpioC, kLedPin, kCfgOutputPushPull2MHz); }
+void ledInit() {
+    configPin(reg::kGpioC, kLedPin, kCfgOutputPushPull2MHz);
+}
 void ledToggle() {
     // Toggle by reading ODR and writing the inverted bit through BSRR/BRR.
-    const bool on = (reg::r32(reg::kGpioC + reg::kGpioIdr) & reg::mask(kLedPin)) == 0;
+    const bool on =
+        (reg::r32(reg::kGpioC + reg::kGpioIdr) & reg::mask(kLedPin)) == 0;
     const uint32_t target =
         on ? reg::kGpioC + reg::kGpioBsrr : reg::kGpioC + reg::kGpioBrr;
     reg::r32(target) = reg::mask(kLedPin);
@@ -203,11 +210,15 @@ void enablePeripheralClocks() {
 
 }  // namespace
 
-// SysTick exception (vector 15). Overrides the weak default in the startup file.
-extern "C" void SysTick_Handler() { ++g_millis; }
+// SysTick exception (vector 15). Overrides the weak default in the startup
+// file.
+extern "C" void SysTick_Handler() {
+    ++g_millis;
+}
 
 int main() {
-    // 4x4 keypad geometry, in static storage so it outlives the Keypad instance.
+    // 4x4 keypad geometry, in static storage so it outlives the Keypad
+    // instance.
     static const uint8_t rowPins[4] = {0, 1, 2, 3};
     static const uint8_t colPins[4] = {4, 5, 6, 7};
     static const char keymap[16] = {
